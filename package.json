@@ -1,0 +1,22 @@
+{
+  "name": "payarc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^5.1.0",
+    "nodemon": "^2.0.2",
+    "typescript": "^3.8.3"
+  },
+  "scripts": {
+    "run": "node lib/index.js",
+    "nodemon": "nodemon lib/index.js",
+    "dev": "concurrently 'yarn run tsc -- -w' 'yarn run nodemon'",
+    "tsc": "tsc"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "dotenv": "^8.2.0",
+    "fetch-headers": "^2.0.0"
+  }
+}
