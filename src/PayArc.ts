@@ -3,8 +3,7 @@ import Axios from "axios";
 import {emailValidation, stringValidation} from "./validations";
 
 type PayArcRequestArgs = { endpoint: string; method: Methods; body?: any | null; limit?: number; page?: number };
-
-// type PayArcRequest = (PayArcRequestArgs) => any;
+type PayArcRequest = ({endpoint, method, body, limit, page}: PayArcRequestArgs) => { headers: { Authorization: string; Accept: string }; method: Methods; body: string; url: string };
 
 class PayArc {
   private readonly clientId: string;
@@ -28,13 +27,13 @@ class PayArc {
     };
   };
 
-  request = ({
-               endpoint,
-               method,
-               body,
-               limit = 100,
-               page = 1,
-             }): { headers: { Authorization: string; Accept: string }; method: Methods; body: string; url: string } => ({
+  request: PayArcRequest = ({
+                              endpoint,
+                              method,
+                              body,
+                              limit = 100,
+                              page = 1,
+                            }): { headers: { Authorization: string; Accept: string }; method: Methods; body: string; url: string } => ({
     url: `${this.endpoint(endpoint)}/?limit=${limit}&page=${page}`,
     method,
     headers: this.headers(method),
@@ -42,11 +41,13 @@ class PayArc {
   });
 
   customers = {
-    customer: ({name, email, description, send_email_address, cc_email_address, country, address_1, address_2, city, state, zip, phone}) => {
+    customerDataVerification: ({name, email, description, send_email_address, cc_email_address, country, address_1, address_2, city, state, zip, phone}) => {
       const errors = [];
       if (!emailValidation(email)) errors.push("email");
       if (!emailValidation(send_email_address)) errors.push("email");
       if (!stringValidation(name, email, send_email_address, country, address_1, country, state, country, zip, phone)) errors.push("empty string");
+      if (errors.length !== 0) throw new Error("Error somewhere");
+      return errors.length === 0
     },
     list: () => {
       const {url, headers} = this.request({
@@ -70,11 +71,37 @@ class PayArc {
       }).then(r => r.data)
         .catch(console.warn);
     },
-    create: () => {
+    create: (customerData) => {
+      if (this.customers.customerDataVerification(customerData)) {
+        const {url, headers, body} = this.request({
+          endpoint: "customers",
+          method: Methods.PATCH,
+          body: customerData
+        });
+        return Axios.post(url, body, {
+          headers,
+        })
+          .then(r => r.data)
+          .catch(console.warn);
+      }
     },
-    update: () => {
+    update: ({customerId, data}) => {
+      const {headers, url} = this.request({
+        endpoint: `customers/${customerId}`,
+        method: Methods.PATCH,
+      });
+      return Axios.patch(url, data, {
+        headers
+      }).then(r => r.data).catch(console.warn);
     },
-    delete: () => {
+    delete: (customerId) => {
+      const {headers, url} = this.request({
+        endpoint: `customers/${customerId}`,
+        method: Methods.DELETE
+      });
+      return Axios.delete(url, {
+        headers
+      }).catch(console.warn)
     },
   };
 
