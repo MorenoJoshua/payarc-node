@@ -122,7 +122,15 @@ class PayArc {
           headers
         }).then(r => r.data).catch(console.warn);
       },
-      update: ({cardId, }) => {
+      update: ({cardId, cardData}) => {
+        const {url, headers} = this.request({
+          endpoint: `cards/${cardId}`,
+          method: Methods.PATCH,
+        });
+        return Axios.patch(url, cardData, {
+          headers,
+          url
+        }).then(r => r.data).catch(console.warn);
       },
     },
     customerDataVerification: ({name, email, description, send_email_address, cc_email_address, country, address_1, address_2, city, state, zip, phone}) => {
