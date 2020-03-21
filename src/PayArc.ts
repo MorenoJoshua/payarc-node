@@ -5,7 +5,19 @@ import {emailValidation, stringValidation} from "./validations";
 type PayArcRequestArgs = { endpoint: string; method: Methods; body?: any | null; limit?: number; page?: number };
 type PayArcRequest = ({endpoint, method, body, limit, page}: PayArcRequestArgs) => { headers: { Authorization: string; Accept: string }; method: Methods; body: string; url: string };
 
+interface CreateChargeData {
+  amount: number;
+  customerId: string;
+  currency: string;
+  statementDescription: string;
+  tokenId: string;
+  capture: 0 | 1;
+}
+
 class PayArc {
+  tokens = {
+    create: () => this.customers.cards.create_step1
+  };
   private readonly clientId: string;
   private readonly clientSecret: string;
   private readonly secretKey: string;
@@ -40,6 +52,89 @@ class PayArc {
     body: body ? JSON.stringify(body) : '',
   });
 
+  charges = {
+    create: (createCargeData: CreateChargeData) => {
+      const {
+        amount, customerId, currency, statementDescription, tokenId, capture
+      } = createCargeData;
+      const {url, headers} = this.request({
+        method: Methods.POST,
+        endpoint: "charges"
+      });
+      return Axios.post(url, {
+        amount, customerId, currency, statementDescription: statementDescription, tokenId, capture
+      }, {
+        headers,
+        url,
+      }).then(r => r.data).catch(console.warn);
+    },
+    retrieve: (chargeId) => {
+      const {url, headers} = this.request({
+        endpoint: `charges/${chargeId}`,
+        method: Methods.GET
+      });
+      return Axios.get(url, {
+        headers,
+        url
+      }).then(r => r.data).catch(console.warn);
+    },
+    list: ({limit, page}: { limit: number, page: number }) => {
+      const {url, headers} = this.request({
+        endpoint: "charges",
+        method: Methods.GET,
+        page,
+        limit
+      });
+      return Axios.get(url, {
+        headers,
+        url,
+      }).then(r => r.data).catch(console.warn);
+
+    },
+    capture: ({chargeId, amount}: { chargeId: string, amount: number }) => {
+      const {url, headers} = this.request({
+        endpoint: `charges/${chargeId}/capture`,
+        method: Methods.POST
+      });
+      return Axios.post(url, {
+        amount
+      }, {
+        headers, url
+      }).then(r => r.data).catch(console.warn)
+    },
+    void: ({chargeId, reason}: { chargeId: string, reason: string }) => {
+      const {url, headers} = this.request({
+        endpoint: `charges/${chargeId}/void`,
+        method: Methods.POST
+      });
+      return Axios.post(url, {
+        reason
+      }, {
+        headers, url
+      }).then(r => r.data).catch(console.warn)
+    },
+    refund: ({chargeId, amount}: { chargeId: string, amount: number }) => {
+      const {url, headers} = this.request({
+        endpoint: `charges/${chargeId}/refunds`,
+        method: Methods.POST
+      });
+      return Axios.post(url, {
+        amount
+      }, {
+        headers, url
+      }).then(r => r.data).catch(console.warn)
+    },
+    listRefunds: () => {
+      const {url, headers} = this.request({
+        endpoint: "refunds",
+        method: Methods.GET
+      });
+      return Axios.get(url, {
+        headers,
+        url
+      }).then(r => r.data).catch(console.warn);
+    },
+  }
   customers = {
     cards: {
       card: ({card_source, card_number, exp_month, exp_year, cvv, card_holder_name, address_line1, address_line2, city, state, zip, country}) => {
