@@ -15,9 +15,15 @@ interface CreateChargeData {
 }
 
 class PayArc {
-  tokens = {
-    create: () => this.customers.cards.create_step1
-  };
+  subscriptions = {
+    // plans: {
+    //   create: () => {},
+    //   retrieve: () => {},
+    //   update: () => {},
+    //   delete: () => {},
+    //   list: () => {},
+    // }
+  }
   private readonly clientId: string;
   private readonly clientSecret: string;
   private readonly secretKey: string;
@@ -291,6 +297,85 @@ class PayArc {
       }).catch(console.warn)
     },
   };
+  tokens = {
+    create: () => this.customers.cards.create_step1
+  };
+  accounts = {
+    get: () => {
+      const {headers, url} = this.request({
+        endpoint: 'invoices',
+        method: Methods.GET
+      });
+
+      return Axios.get(url, {
+        headers
+      }).then(r => r.data).catch(console.warn)
+    }
+  }
+  invoices = {
+    get: () => {
+      const {headers, url} = this.request({
+        endpoint: 'invoices',
+        method: Methods.GET
+      });
+
+      return Axios.get(url, {
+        headers
+      }).then(r => r.data).catch(console.warn)
+    }
+  }
+  deposits = {
+    get: ({
+            month, year
+          }: { month: number, year: number }) => {
+      const {headers, url} = this.request({
+        endpoint: 'deposits/reports',
+        method: Methods.POST
+      });
+
+      return Axios.post(url, {
+        month, year
+      }, {
+        headers
+      }).then(r => r.data).catch(console.warn)
+    },
+    getDetails: ({
+                   referenceNumber
+                 }: { referenceNumber: string }) => {
+      const {headers, url} = this.request({
+        endpoint: 'deposits/reports/details',
+        method: Methods.POST
+      });
+
+      return Axios.post(url, {referenceNumber}, {
+        headers
+      }).then(r => r.data).catch(console.warn)
+    }
+  }
+  disputes = {
+    get: () => {
+      const {headers, url} = this.request({
+        endpoint: 'disputes',
+        method: Methods.GET
+      });
+
+      return Axios.get(url, {
+        headers
+      }).then(r => r.data).catch(console.warn)
+    },
+    getDispute: ({
+                   disputeId
+                 }) => {
+      const {headers, url} = this.request({
+        endpoint: `disputes/${disputeId}`,
+        method: Methods.GET
+      });
+
+      return Axios.get(url, {
+        headers
+      }).then(r => r.data).catch(console.warn)
+    }
+  }
 
   endpoint = (queryString) => `${this.baseURL}/customers`;
 
